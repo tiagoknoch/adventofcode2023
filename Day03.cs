@@ -1,4 +1,7 @@
-﻿namespace AdventOfCode;
+﻿using System.Linq;
+using System.Text;
+
+namespace AdventOfCode;
 
 public class Day03 : BaseDay
 {
@@ -12,17 +15,12 @@ public class Day03 : BaseDay
 
     public override ValueTask<string> Solve_1()
     {
-        var result = 0;
         var lines = _input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
         var matrix = lines.Select(line => line.ToCharArray()).ToArray();
 
-        foreach (var number in GetNumbers(matrix))
-        {
-            if (HasAdjacentPart(number.Item2, number.Item3, number.Item1, matrix))
-            {
-                result += int.Parse(number.Item1);
-            }
-        }
+        var result = GetNumbers(matrix)
+         .Where(number => HasAdjacentPart(number.Item2, number.Item3, number.Item1, matrix))
+         .Sum(number => int.Parse(number.Item1));
 
         return new(result.ToString());
     }
@@ -90,42 +88,39 @@ public class Day03 : BaseDay
 
     public static IEnumerable<(string, int, int)> GetNumbers(char[][] matrix)
     {
-        bool fetchingNumber = false;
-        string number = "";
+        var number = new StringBuilder();
         int initialI = 0;
         int initialJ = 0;
+        bool fetchingNumber = false;
+
         for (int i = 0; i < matrix.Length; i++)
         {
             for (int j = 0; j < matrix[i].Length; j++)
             {
                 var cell = matrix[i][j];
-                if (fetchingNumber)
+                if (char.IsDigit(cell))
                 {
-                    if (int.TryParse(cell.ToString(), out var _))
-                    {
-                        number += cell.ToString();
-                    }
-                    else
-                    {
-                        yield return (number, initialI, initialJ);
-                        //reset
-                        fetchingNumber = false;
-                        number = "";
-                        initialI = 0;
-                        initialJ = 0;
-                    }
-                }
-                else
-                {
-                    if (int.TryParse(cell.ToString(), out var _))
+                    if (!fetchingNumber)
                     {
                         fetchingNumber = true;
                         initialI = i;
                         initialJ = j;
-                        number = cell.ToString();
                     }
+
+                    number.Append(cell);
+                }
+                else if (fetchingNumber)
+                {
+                    yield return (number.ToString(), initialI, initialJ);
+                    number.Clear();
+                    fetchingNumber = false;
                 }
             }
+        }
+
+        if (fetchingNumber)
+        {
+            yield return (number.ToString(), initialI, initialJ);
         }
     }
 
@@ -134,21 +129,4 @@ public class Day03 : BaseDay
         throw new NotImplementedException();
     }
 
-    public static IEnumerable<char[][]> GetAdjacentParts(char[][] matrix)
-    {
-        for (int i = 1; i < matrix.Length - 1; i++)
-        {
-            for (int j = 1; j < matrix[i].Length - 1; j++)
-            {
-                var current = matrix[i][j];
-                if (current != '.' && !int.TryParse(current.ToString(), out _))
-                {
-                    //its a part, return the adjacent elements
-                    yield return new char[][] { [matrix[i - 1][j - 1], matrix[i - 1][j], matrix[i -1][j + 1]],
-                        [matrix[i][j-1], matrix[i][j], matrix[i][j+1]],
-                        [matrix[i + 1][j - 1], matrix[i+1][j ], matrix[i + 1][j + 1]] };
-                }
-            }
-        }
-    }
 }
