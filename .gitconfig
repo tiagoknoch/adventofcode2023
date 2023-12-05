@@ -1,0 +1,9 @@
+[user]
+email = tiagoknoch@gmail.com
+name = Tiago Knoch
+ 
+[github]
+user = "tiagoknoch"
+ 
+[core]
+sshCommand = "ssh -i ~/.ssh/tiagoknoch-GitHub"
