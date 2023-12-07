@@ -24,6 +24,57 @@ public class Day03 : BaseDay
 
         return new(result.ToString());
     }
+    public override ValueTask<string> Solve_2()
+    {
+        var lines = _input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        var matrix = lines.Select(line => line.ToCharArray()).ToArray();
+
+        var result = GetGears(matrix)
+         .Sum(number =>
+         {
+             var numbers = GetAdjacentNumbers(number.Item2, number.Item3, matrix).ToList();
+             return numbers.Count == 2 ? numbers[0] * numbers[1] : 0;
+         });
+
+        return new(result.ToString());
+    }
+
+
+    private static List<int> GetAdjacentNumbers(int i, int j, char[][] matrix)
+    {
+        //first get numbers in the 3 lines where gear is
+        var numbers = Enumerable.Range(i - 1, 3)
+                        .SelectMany(line => GetNumbersByLine(matrix, line))
+                        .ToList();
+
+        var adjacentNumbers = numbers
+            .Where(number => IsAdjacent(number, (i, j)))
+            .Select(number => int.Parse(number.Item1))
+            .ToList();
+
+        return adjacentNumbers;
+    }
+
+    private static bool IsAdjacent((string, int, int) number, (int, int) gear)
+    {
+        var (numberString, iNumber, jNumber) = number;
+        var (iGear, jGear) = gear;
+
+
+        var numberCoordinates = Enumerable.Range(jNumber, numberString.Length)
+                                          .Select(j => (iNumber, j))
+                                          .ToList();
+
+        //get all adjacent coordinates for gear
+        var adjacentCoordinatesGear = Enumerable.Range(iGear - 1, 3)
+                                                .SelectMany(i => Enumerable.Range(jGear - 1, 3)
+                                                .Select(j => (i, j)))
+                                                .ToList();
+
+        //check if they intersect
+        var intersect = numberCoordinates.Intersect(adjacentCoordinatesGear).Any();
+        return intersect;
+    }
 
     private bool HasAdjacentPart(int i, int j, string number, char[][] matrix)
     {
@@ -86,7 +137,21 @@ public class Day03 : BaseDay
         return surroundElements.Any(x => _parts.Any(y => y == x));
     }
 
-    public static IEnumerable<(string, int, int)> GetNumbers(char[][] matrix)
+    private static IEnumerable<(string, int, int)> GetGears(char[][] matrix)
+    {
+        for (int i = 0; i < matrix.Length; i++)
+        {
+            for (int j = 0; j < matrix[i].Length; j++)
+            {
+                if (matrix[i][j] == '*')
+                {
+                    yield return ("*", i, j);
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<(string, int, int)> GetNumbers(char[][] matrix)
     {
         var number = new StringBuilder();
         int initialI = 0;
@@ -124,9 +189,40 @@ public class Day03 : BaseDay
         }
     }
 
-    public override ValueTask<string> Solve_2()
+    private static IEnumerable<(string, int, int)> GetNumbersByLine(char[][] matrix, int i)
     {
-        throw new NotImplementedException();
+        var number = new StringBuilder();
+        int initialI = 0;
+        int initialJ = 0;
+        bool fetchingNumber = false;
+
+
+        for (int j = 0; j < matrix[i].Length; j++)
+        {
+            var cell = matrix[i][j];
+            if (char.IsDigit(cell))
+            {
+                if (!fetchingNumber)
+                {
+                    fetchingNumber = true;
+                    initialI = i;
+                    initialJ = j;
+                }
+
+                number.Append(cell);
+            }
+            else if (fetchingNumber)
+            {
+                yield return (number.ToString(), initialI, initialJ);
+                number.Clear();
+                fetchingNumber = false;
+            }
+        }
+
+        if (fetchingNumber)
+        {
+            yield return (number.ToString(), initialI, initialJ);
+        }
     }
 
 }
