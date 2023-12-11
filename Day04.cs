@@ -22,24 +22,6 @@ public class Day04 : BaseDay
         return new(result.ToString());
 
 
-        static List<int> GetWinningsNumbers(string line)
-        {
-            var result = line.Split("|", StringSplitOptions.TrimEntries)[1]
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Select(int.Parse)
-                .ToList();
-            return result;
-        }
-
-        static List<int> GetNumbers(string line)
-        {
-            var result = line.Split("|", StringSplitOptions.TrimEntries)[0]
-                .Split(":", StringSplitOptions.TrimEntries)[1]
-                .Split(" ", StringSplitOptions.RemoveEmptyEntries)
-                .Select(int.Parse)
-                .ToList();
-            return result;
-        }
 
         static int GetScore(IEnumerable<int> numbers)
         {
@@ -54,7 +36,57 @@ public class Day04 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        throw new NotImplementedException();
+        var results = new Dictionary<int, int>();
+        var queue = new Queue<int>();
+
+        //get the winning numbers for each line
+        var lines = _input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                  .Select((line, index) => (index + 1, Numbers: GetNumbers(line).Intersect(GetWinningsNumbers(line)).Count()))
+                  .ToList();
+
+        // Initialize the dictionary with the line number and the number of winning numbers
+        Enumerable.Range(1, lines.Count)
+        .ToList()
+        .ForEach(x =>
+        {
+            results.Add(x, 1);
+            queue.Enqueue(x);
+        });
+
+        while (queue.Any())
+        {
+            var current = queue.Dequeue();
+            var (_, numbers) = lines[current - 1];
+            foreach (var number in Enumerable.Range(current + 1, numbers))
+            {
+                queue.Enqueue(number);
+                if (!results.TryAdd(number, 1))
+                {
+                    results[number] += 1;
+                }
+            }
+        }
+
+        return new(results.Values.Sum().ToString());
     }
 
+
+    static List<int> GetWinningsNumbers(string line)
+    {
+        var result = line.Split("|", StringSplitOptions.TrimEntries)[1]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(int.Parse)
+            .ToList();
+        return result;
+    }
+
+    static List<int> GetNumbers(string line)
+    {
+        var result = line.Split("|", StringSplitOptions.TrimEntries)[0]
+            .Split(":", StringSplitOptions.TrimEntries)[1]
+            .Split(" ", StringSplitOptions.RemoveEmptyEntries)
+            .Select(int.Parse)
+            .ToList();
+        return result;
+    }
 }
