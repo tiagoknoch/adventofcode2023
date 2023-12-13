@@ -46,6 +46,7 @@ public class Day05 : BaseDay
     }
 
 
+    // Part 2 is not solved. This solution is brute force and takes too long to run.
     public override ValueTask<string> Solve_2()
     {
         var lines = _input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
