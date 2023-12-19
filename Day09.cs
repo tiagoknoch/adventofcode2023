@@ -19,11 +19,10 @@ public class Day09 : BaseDay
 
     public override ValueTask<string> Solve_1()
     {
-
         var lastItems = new List<int>();
         foreach (var line in _lines)
         {
-            var items = line.Split(" ").Select(int.Parse).ToList();
+            var items = line.Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
             List<int> results = [-1];
             var allDifferences = new List<List<int>>
             {
@@ -50,6 +49,33 @@ public class Day09 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        throw new NotImplementedException();
+        var lastItems = new List<int>();
+        foreach (var line in _lines)
+        {
+            var items = line.Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+            List<int> results = [-1];
+            var allDifferences = new List<List<int>>
+            {
+                items
+            };
+
+            while (!results.TrueForAll(x => x == 0))
+            {
+                results = CalculateConsecutiveDifferences(items);
+                allDifferences.Add(results);
+                items = results;
+            }
+
+            int currentValue = 0;
+            for (int i = allDifferences.Count - 1; i >= 0; i--)
+            {
+                currentValue = allDifferences[i].First() - currentValue;
+            }
+
+            lastItems.Add(currentValue);
+        }
+
+        var finalResult = lastItems.Sum();
+        return new(finalResult.ToString());
     }
 }
