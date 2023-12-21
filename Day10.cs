@@ -1,4 +1,6 @@
 ﻿using System.Data;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace AdventOfCode;
 
@@ -44,10 +46,107 @@ public class Day10 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        return new(_input.Length.ToString());
+        var loop = new Loop(_start);
+        // Lets build the loop going right
+        loop.BuildLoop(_map, new Coordinate(_start.X + 1, _start.Y));
+
+        var vertices = GetVertices(loop);
+        var area = PolygonArea(vertices.Select(v => (double)v.X).ToArray(), vertices.Select(v => (double)v.Y).ToArray(), vertices.Count);
+
+        var insideCoordinates = new List<Coordinate>();
+        for (int i = 0; i < _map.Length; i++)
+        {
+            for (int j = 0; j < _map[i].Length; j++)
+            {
+                if (IsPointInPolygon4(vertices.ToArray(), new Coordinate(j, i)))
+                {
+                    insideCoordinates.Add(new Coordinate(j, i));
+                }
+            }
+        }
+
+        // remove all pipe coordinates from inside coordinates
+        var pipeCoordinates = loop.Pipes.Select(pipe => pipe.Coordinate).ToList();
+        insideCoordinates.RemoveAll(l => pipeCoordinates.Contains(l));
+
+
+        DrawMap(loop, vertices, insideCoordinates);
+
+        return new(insideCoordinates.Count.ToString());
     }
 
+    private static List<Coordinate> GetVertices(Loop loop)
+    {
+        var symbols = new HashSet<char> { 'S', '7', 'L', 'F', 'J' };
 
+        return loop.Pipes
+            .Where(pipe => symbols.Contains(pipe.Symbol))
+            .Select(pipe => pipe.Coordinate)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Determines if the given point is inside the polygon
+    /// </summary>
+    /// <param name="polygon">the vertices of polygon</param>
+    /// <param name="testPoint">the given point</param>
+    /// <returns>true if the point is inside the polygon; otherwise, false</returns>
+    public static bool IsPointInPolygon4(Coordinate[] polygon, Coordinate testPoint)
+    {
+        bool result = false;
+        int j = polygon.Length - 1;
+        for (int i = 0; i < polygon.Length; i++)
+        {
+            if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y ||
+                polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+            {
+                if (polygon[i].X + (testPoint.Y - polygon[i].Y) /
+                   (polygon[j].Y - polygon[i].Y) *
+                   (polygon[j].X - polygon[i].X) < testPoint.X)
+                {
+                    result = !result;
+                }
+            }
+            j = i;
+        }
+        return result;
+    }
+
+    public void DrawMap(Loop loop, List<Coordinate> vertices, List<Coordinate> insideCoordinates)
+    {
+        for (int i = 0; i < _map.Length; i++)
+        {
+            for (int j = 0; j < _map[i].Length; j++)
+            {
+                if (loop.Pipes.Any(pipe => pipe.Coordinate == new Coordinate(j, i)))
+                {
+                    if (vertices.Any(v => v == new Coordinate(j, i)))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                }
+                else
+                {
+                    if (insideCoordinates.Any(v => v == new Coordinate(j, i)))
+                    {
+
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                }
+                Console.Write(_map[i][j]);
+            }
+            Console.WriteLine();
+        }
+
+    }
 
     public Coordinate GetStart()
     {
@@ -63,6 +162,28 @@ public class Day10 : BaseDay
         }
 
         throw new InvalidDataException("No start found");
+    }
+
+    public static double PolygonArea(double[] X,
+                               double[] Y, int n)
+    {
+
+        // Initialize area
+        double area = 0.0;
+
+        // Calculate value of shoelace formula
+        int j = n - 1;
+
+        for (int i = 0; i < n; i++)
+        {
+            area += (X[j] + X[i]) * (Y[j] - Y[i]);
+
+            // j is previous vertex to i
+            j = i;
+        }
+
+        // Return absolute value
+        return Math.Abs(area / 2.0);
     }
 }
 
@@ -177,3 +298,4 @@ public class Pipe
         }
     }
 }
+
