@@ -9,7 +9,6 @@ public class Day09 : BaseDay
     {
         _input = File.ReadAllText(InputFilePath);
         _lines = _input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-
     }
 
     static List<int> CalculateConsecutiveDifferences(IEnumerable<int> list)
