@@ -1,6 +1,4 @@
 ﻿using System.Data;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace AdventOfCode;
 
@@ -51,7 +49,6 @@ public class Day10 : BaseDay
         loop.BuildLoop(_map, new Coordinate(_start.X + 1, _start.Y));
 
         var vertices = GetVertices(loop);
-        var area = PolygonArea(vertices.Select(v => (double)v.X).ToArray(), vertices.Select(v => (double)v.Y).ToArray(), vertices.Count);
 
         var insideCoordinates = new List<Coordinate>();
         for (int i = 0; i < _map.Length; i++)
@@ -164,27 +161,7 @@ public class Day10 : BaseDay
         throw new InvalidDataException("No start found");
     }
 
-    public static double PolygonArea(double[] X,
-                               double[] Y, int n)
-    {
 
-        // Initialize area
-        double area = 0.0;
-
-        // Calculate value of shoelace formula
-        int j = n - 1;
-
-        for (int i = 0; i < n; i++)
-        {
-            area += (X[j] + X[i]) * (Y[j] - Y[i]);
-
-            // j is previous vertex to i
-            j = i;
-        }
-
-        // Return absolute value
-        return Math.Abs(area / 2.0);
-    }
 }
 
 public record Coordinate(int X, int Y);
